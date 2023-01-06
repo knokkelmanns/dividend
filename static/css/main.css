@@ -1,0 +1,36 @@
+body {
+  background: #ffffff;
+}
+
+.row {
+  background-color: lightskyblue;
+  text-align: center;
+  padding: 5px 5px 60px;
+}
+
+table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+tr {
+  width: 150px;
+  text-align: center;
+  border: 1px solid black;
+  padding: 5px;
+}
+
+td {
+  width: 150px;
+  text-align: center;
+  border: 1px solid black;
+  padding: 5px;
+}
+
+#footer {
+  text-align: center;
+}
+
+.container {
+  padding-top: 60px;
+}

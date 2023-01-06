@@ -1,0 +1,24 @@
+{% for item in data %}
+<table>
+  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>TICKER</th>
+                      <th>DECLARED</th>
+                      <th>EXDIVIDEND</th>
+                      <th>PAYOUT</th>
+                      <th>AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                      <td>{item[0]}</td>
+                      <td>{item[1]}</td>
+                      <td>{item[2]}</td>
+                      <td>{item[3]}</td>
+                      <td>{item[4]}</td>
+                      <td>{item[5]}</td>
+                    </tr>
+                </tbody>
+</table>
+{% endfor %}

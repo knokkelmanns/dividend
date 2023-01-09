@@ -1,11 +1,13 @@
+import config
 import psycopg2
 from flask_cors import CORS
-from flask import Flask, render_template
+from flask import Flask, jsonify, render_template
 
 app = Flask(__name__)
 CORS(app)
 
-con = psycopg2.connect(database="", user="", password="", host="127.0.0.1", port="")
+con = psycopg2.connect(database=config.database, user=config.user, password=config.password,
+                       host=config.host, port=config.port)
 cur = con.cursor()
 
 

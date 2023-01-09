@@ -1,13 +1,15 @@
 import re
+import json
+import config
 import requests
 import psycopg2
 
 # Initiating connection to DB
-con = psycopg2.connect(database="",
-                       user="",
-                       password="",
-                       host="127.0.0.1",
-                       port="")
+con = psycopg2.connect(database=config.database,
+                       user=config.user,
+                       password=config.password,
+                       host=config.host,
+                       port=config.port)
 
 # Creating a table and setting columns
 cur = con.cursor()
@@ -50,6 +52,7 @@ def get_stock_history(ticker):
                    f"&_token_userid={token['_token_userid']}"
 
     dividend_history = requests.request("GET", data_api_url).json()
+    # print(data_api_url)
     return dividend_history
 
 
@@ -62,6 +65,8 @@ def get_stocks_from_file(path):
 def get_latest_ticker_dividends(dividend_history):
     sorted_dividends = dividend_history['CashDividends']
 
+    # dividends = [dividend for dividend in sorted_dividends]
+
     sorted_dividends.sort(key=lambda x: (x['PayDate'] is not None, x['PayDate']), reverse=True)
 
     dividends = [dividend for dividend in sorted_dividends if dividend['PayDate']]
@@ -73,12 +78,14 @@ def get_latest_ticker_dividends(dividend_history):
 def get_company_data(dividend_history):
     company_data = dividend_history['Security']
 
+    # print(json.dumps(company_data, indent=1))
+
     return [dict(company_data)]
 
 
 paying_companies = []
 company_info = []
-for ticker in get_stocks_from_file("****.txt"):
+for ticker in get_stocks_from_file("keka.txt"):
     ticker_history = get_stock_history(ticker)
     paying_companies.extend(get_latest_ticker_dividends(ticker_history))
     company_info.extend(get_company_data(ticker_history))
@@ -101,6 +108,7 @@ for data in company_info:
     name = data['Name']
     industry = re.sub(r"(\w)([A-Z])", r"\1 \2", data['Industry'])
     sector = re.sub(r"(\w)([A-Z])", r"\1 \2", data['Sector'])
+    # print(name, industry, sector)
 
 # Inserting data about company into a table
     cur.execute("INSERT INTO dividend (COMPANY_NAME, INDUSTRY, SECTOR) VALUES(%s, %s, %s)", (name, industry, sector))

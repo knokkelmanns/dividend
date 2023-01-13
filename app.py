@@ -13,23 +13,9 @@ cur = con.cursor()
 
 @app.route("/", methods=["GET"])
 def view_home():
-    cur.execute("SELECT DISTINCT ticker FROM dividend")
+    cur.execute("SELECT * FROM dividend")
     data = cur.fetchall()
     return render_template('index.html', data=data)
-
-
-@app.route("/first", methods=["GET"])
-def view_first_page():
-    cur.execute("SELECT DISTINCT ticker FROM dividend")
-    data = cur.fetchall()
-    return render_template('index.html', title="First page", data=data)
-
-
-@app.route("/second", methods=["GET"])
-def view_second_page():
-    cur.execute("SELECT DISTINCT ticker FROM dividend")
-    data = cur.fetchall()
-    return render_template('index.html', title="Second page", data=data)
 
 
 if __name__ == '__main__':

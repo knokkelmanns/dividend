@@ -1,4 +1,5 @@
 import re
+import json
 import config
 import requests
 import psycopg2
@@ -51,6 +52,7 @@ def get_stock_history(ticker):
                    f"&_token_userid={token['_token_userid']}"
 
     dividend_history = requests.request("GET", data_api_url).json()
+    # print(data_api_url)
     return dividend_history
 
 
@@ -63,6 +65,8 @@ def get_stocks_from_file(path):
 def get_latest_ticker_dividends(dividend_history):
     sorted_dividends = dividend_history['CashDividends']
 
+    # dividends = [dividend for dividend in sorted_dividends]
+
     sorted_dividends.sort(key=lambda x: (x['PayDate'] is not None, x['PayDate']), reverse=True)
 
     dividends = [dividend for dividend in sorted_dividends if dividend['PayDate']]
@@ -71,38 +75,52 @@ def get_latest_ticker_dividends(dividend_history):
 
 
 # Get full information about company
-def get_company_data(dividend_history):
-    company_data = dividend_history['Security']
+def get_dividend_data(tickers):
+    dividend_data = {}
+    for ticker in tickers:
+        ticker_history = get_stock_history(ticker)
+        dividends = get_latest_ticker_dividends(ticker_history)
+        dividend_data[ticker] = []
+        for dividend in dividends:
+            data = {
+                "Identifier": ticker_history["Identifier"],
+                "Name": ticker_history["Security"]["Name"],
+                "Sector": re.sub(r"(\w)([A-Z])", r"\1 \2", ticker_history["Security"]["Sector"]),
+                "Industry": re.sub(r"(\w)([A-Z])", r"\1 \2", ticker_history["Security"]["Industry"]),
+                "Type": dividend["Type"],
+                "PaymentFrequency": dividend["PaymentFrequency"],
+                "DeclaredDate": dividend["DeclaredDate"],
+                # "RecordDate": dividend["RecordDate"],
+                "PayDate": dividend["PayDate"],
+                "ExDate": dividend["ExDate"],
+                "DividendAmount": dividend["DividendAmount"],
+            }
+            dividend_data[ticker].append(data)
+    return dividend_data
 
-    return [dict(company_data)]
 
+tickers = get_stocks_from_file("keka.txt")
+dividend_data = get_dividend_data(tickers)
 
-paying_companies = []
-company_info = []
-for ticker in get_stocks_from_file("***.txt"):
-    ticker_history = get_stock_history(ticker)
-    paying_companies.extend(get_latest_ticker_dividends(ticker_history))
-    company_info.extend(get_company_data(ticker_history))
+# print(json.dumps(dividend_data, indent=1))
 
-
-for dividend in paying_companies:
-    ticker = dividend['ticker']
-    freq = dividend['PaymentFrequency']
-    amount = dividend['DividendAmount']
-    declared_date = dividend['DeclaredDate']
-    exdividend_date = dividend['ExDate']
-    payout_date = dividend['PayDate']
+for ticker, ticker_data in dividend_data.items():
+    for data in ticker_data:
+        name = data["Name"]
+        symbol = data["Identifier"]
+        freq = data["PaymentFrequency"]
+        declared_date = data["DeclaredDate"]
+        exdividend_date = data["ExDate"]
+        payout_date = data["PayDate"]
+        amount = data["DividendAmount"]
+        industry = data["Industry"]
+        sector = data["Sector"]
+        # dividend_type = data["Type"]
+        print(f"{name}, {symbol}, {freq}, {declared_date}, {exdividend_date}, {payout_date}, {amount}, {industry}, "
+              f"{sector}")
 
 # Inserting data about dividends into a table
-    cur.execute("INSERT INTO dividend (TICKER, FREQ, DECLARED, EXDIVIDEND, PAYOUT, AMOUNT) VALUES(%s, %s, "
-                "%s, %s, %s, %s)", (ticker, freq, declared_date, exdividend_date, payout_date, amount))
-    con.commit()
-
-for data in company_info:
-    name = data['Name']
-    industry = re.sub(r"(\w)([A-Z])", r"\1 \2", data['Industry'])
-    sector = re.sub(r"(\w)([A-Z])", r"\1 \2", data['Sector'])
-
-# Inserting data about company into a table
-    cur.execute("UPDATE dividend SET COMPANY_NAME = '%s', INDUSTRY = '%s', SECTOR = '%s'" % (name, industry, sector))
-    con.commit()
+        cur.execute("INSERT INTO dividend (COMPANY_NAME, TICKER, FREQ, DECLARED, EXDIVIDEND, PAYOUT, AMOUNT, INDUSTRY, "
+                    "SECTOR) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    (name, symbol, freq, declared_date, exdividend_date, payout_date, amount, industry, sector))
+        con.commit()

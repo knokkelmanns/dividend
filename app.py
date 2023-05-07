@@ -13,18 +13,19 @@ cur = con.cursor()
 
 @app.route("/", methods=["GET"])
 def view_home():
-    cur.execute("SELECT * FROM dividend;")
+    cur.execute("SELECT * FROM dividend t1 WHERE t1.PAYOUT = (SELECT MAX(t2.PAYOUT) "
+                "FROM dividend t2 WHERE t2.COMPANY_NAME = t1.COMPANY_NAME) ORDER BY t1.PAYOUT DESC;")
+
     data = cur.fetchall()
     return render_template('index.html', data=data)
 
 
-@app.route("/company/", methods=["GET"])
 @app.route("/company/<ticker>", methods=["GET"])
-def get_company():
-    cur.execute("SELECT * FROM dividend;")
-    name = cur.fetchall()
+def get_company(ticker):
+    cur.execute("SELECT * FROM dividend WHERE TICKER = %s;", (ticker,))
+    company_data = cur.fetchall()
 
-    return render_template('company.html', data=name)
+    return render_template('company.html', company_data=company_data)
 
 
 if __name__ == '__main__':

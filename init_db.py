@@ -99,7 +99,7 @@ def get_dividend_data(tickers):
     return dividend_data
 
 
-tickers = get_stocks_from_file("keka.txt")
+tickers = get_stocks_from_file("TICKERS_HERE.txt")
 dividend_data = get_dividend_data(tickers)
 
 # print(json.dumps(dividend_data, indent=1))
